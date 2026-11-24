@@ -1412,11 +1412,17 @@ class HyperFramesCompose(BaseTool):
         except subprocess.TimeoutExpired as e:
             # Surface timeouts as a failed CompletedProcess so callers get a
             # uniform shape. The stderr tail will say timeout.
+            # TimeoutExpired carries bytes even when text=True, so decode first.
+            def _txt(v):
+                if isinstance(v, bytes):
+                    return v.decode("utf-8", errors="replace")
+                return v or ""
+
             return subprocess.CompletedProcess(
                 args=cmd,
                 returncode=124,
-                stdout=e.stdout or "",
-                stderr=(e.stderr or "") + f"\n[timeout after {timeout}s]",
+                stdout=_txt(e.stdout),
+                stderr=_txt(e.stderr) + f"\n[timeout after {timeout}s]",
             )
 
     @staticmethod
